@@ -11,7 +11,8 @@ Medium.AttenuationA = 0.75; % [dB/cm/MHz^y]
 Medium.AttenuationB = 1.5; % power coefficient y
 
 %%
-Transmit.CenterFrequency = 15e6; % [Hz]
+Transmit.CenterFrequency = 15.625e6; % [Hz]
+Transmit.Gap = false; % add a silent element in transmission
 
 %%
 SimulationParameters.CFL = 0.3;
@@ -24,8 +25,12 @@ Acquisition.NumberOfFrames = 1;
 
 %%
 Transducer.Type = 'RCA';
-Transducer.NumberOfElements = 32; 
-Transducer.NumberOfElementsOrth = 32;
+if Transmit.Gap
+    Transducer.NumberOfElements = 33; 
+else
+    Transducer.NumberOfElements = 32;
+end
+Transducer.NumberOfElementsOrth = Transducer.NumberOfElements;
 Transducer.NumberOfActiveElements = 32;
 Transducer.Pitch = 100e-6; % [m]
 Transducer.ElementWidth = 100e-6; % [m]
@@ -37,7 +42,7 @@ Transducer.SamplingRate = 250e6; % [Hz]
 Transducer = estimate_impulse_response(Transducer);
 
 %%
-Transmit.NumberOfCycles = 3; 
+Transmit.NumberOfCycles = 4; 
 Transmit.AcousticPressure = 400e3; % [Pa]
 Transmit.Envelope = 'Gaussian';
 Transmit.SamplingRate = 250e6; % [Hz]
@@ -46,15 +51,21 @@ signal = toneBurst(Transmit.SamplingRate, Transmit.CenterFrequency,...
 Transmit.PressureSignal = Transmit.AcousticPressure * signal / max(signal); 
 Transmit.Angle = 21; % [deg]
 Transmit.LateralFocus = Inf; 
-% define transducer element delays 
+
+%%
+% define element delays 
 element_index = 0:Transducer.NumberOfActiveElements/2-1;    
 element_index = [element_index fliplr(element_index)];
 delays.no_gap = Transducer.Pitch * element_index * sind(Transmit.Angle) / Medium.SpeedOfSound;
-% define transducer element apodization 
+delays.gap = [delays.no_gap(1:end/2) 0 delays.no_gap(end/2+1:end)];
+% define element apodization 
 window_half = getWin(Transducer.NumberOfActiveElements/2, 'Tukey', 'Param', 0.2, 'Plot', false)';
 window.no_gap.both = repmat(window_half, 1, 2);
 window.no_gap.left = [window_half zeros(1, length(window_half))];
 window.no_gap.right = [zeros(1, length(window_half)) window_half];
+window.gap.both = [window_half 0 window_half];
+window.gap.left = [window_half zeros(1, length(window_half)+1)];
+window.gap.right = [zeros(1, length(window_half)+1) window_half];
 
 %% interested in the field in front of probe till wave cross-propagate
 Geometry.startDepth = 0; % [m]
@@ -86,20 +97,38 @@ Transmit.Delays = zeros(1, Transducer.NumberOfElements);
 Transmit.Apodization = zeros(1, Transducer.NumberOfElements);
 sequence = {'both', 'left', 'right'};
 
-% GUI parameters without gap
-for i = 1 : length(sequence)
-    Transmit.Delays(1:length(delays.no_gap)) = delays.no_gap; 
-    switch sequence{i}
-        case 'left'
-            Transmit.Apodization(1:length(window.no_gap.left)) = window.no_gap.left;
-        case 'right'
-            Transmit.Apodization(1:length(window.no_gap.right)) = window.no_gap.right;
-        case 'both'
-            Transmit.Apodization(1:length(window.no_gap.both)) = window.no_gap.both;
+% GUI parameters with gap
+if Transmit.Gap 
+    for i = 1 : length(sequence)
+        Transmit.Delays(1:length(delays.gap)) = delays.gap; 
+        switch sequence{i}
+            case 'left'
+                Transmit.Apodization(1:length(window.gap.left)) = window.gap.left;
+            case 'right'
+                Transmit.Apodization(1:length(window.gap.right)) = window.gap.right;
+            case 'both'
+                Transmit.Apodization(1:length(window.gap.both)) = window.gap.both;
+        end
+        save([file_path '/GUI_output_parameters_RCA_' sequence{i} '.mat'],...
+            'SimulationParameters', 'Geometry','Transducer','Acquisition','Medium','Transmit');
     end
-    save([file_path '/GUI_output_parameters_RCA_' sequence{i} '.mat'],...
-        'SimulationParameters', 'Geometry','Transducer','Acquisition','Medium','Transmit');
+% GUI parameters without gap
+else       
+    for i = 1 : length(sequence)
+        Transmit.Delays(1:length(delays.no_gap)) = delays.no_gap; 
+        switch sequence{i}
+            case 'left'
+                Transmit.Apodization(1:length(window.no_gap.left)) = window.no_gap.left;
+            case 'right'
+                Transmit.Apodization(1:length(window.no_gap.right)) = window.no_gap.right;
+            case 'both'
+                Transmit.Apodization(1:length(window.no_gap.both)) = window.no_gap.both;
+        end
+        save([file_path '/GUI_output_parameters_RCA_' sequence{i} '.mat'],...
+            'SimulationParameters', 'Geometry','Transducer','Acquisition','Medium','Transmit');
+    end
 end
+
 %% sensor distribution for sound sheet; orientation XZ
 orientation = 'xz';
 

@@ -1,12 +1,15 @@
 clear all
 % load standard Microbbuble and Medium GUI parameters
-load('/Users/akuliesh1/microbubble-flow-simulator-gui/GUI_output_parameters.mat', 'Microbubble', 'Medium')
+load('/Users/akuliesh1/RCA_GUI/GUI_output_parameters.mat', 'Microbubble', 'Medium')
 
 %%
-Medium.Inhomogeneity = 0.05;
+Medium.Inhomogeneity = 0;
+Medium.InhomogeneityCutoff = 2;
+Medium.SpeedOfSoundMinimum = Medium.SpeedOfSound*(1-Medium.Inhomogeneity*Medium.InhomogeneityCutoff);
+Medium.SpeedOfSoundMaximum = Medium.SpeedOfSound*(1+Medium.Inhomogeneity*Medium.InhomogeneityCutoff);
 
 %%
-Transmit.CenterFrequency = 15e6; % [Hz]
+Transmit.CenterFrequency = 15.625e6; % [Hz]
 
 %%
 SimulationParameters.CFL = 0.3;
@@ -17,7 +20,7 @@ SimulationParameters.GridSize = Medium.SpeedOfSound / Transmit.CenterFrequency /
 %%
 Acquisition.NumberOfFrames = 1;
 Acquisition.PulsingScheme = 'x-AM'; % options: {'x-AM' 'x-Bmode'}
-Acquisition.NumberOfShifts = 0;
+Acquisition.NumberOfShifts = 4;
 
 %%
 sequence = {'left', 'right', 'both'};
@@ -37,7 +40,7 @@ Transducer.SamplingRate = 250e6; % [Hz]
 Transducer = estimate_impulse_response(Transducer);
 
 %%
-Transmit.NumberOfCycles = 5; 
+Transmit.NumberOfCycles = 4; 
 Transmit.AcousticPressure = 400e3; % [Pa]
 Transmit.Envelope = 'Gaussian';
 Transmit.SamplingRate = 250e6; % [Hz]
@@ -95,10 +98,9 @@ save([file_path '/GUI_output_parameters_RCA.mat'],...
 
 Transmit.Delays = zeros(1, Transducer.NumberOfElements);
 Transmit.Apodization = zeros(1, Transducer.NumberOfElements);
-N_shifts = Transducer.NumberOfElements - Transducer.NumberOfActiveElements - 1;
 
 % GUI parameters with gap
-for shift  = 0 : N_shifts
+for shift  = 0 : Acquisition.NumberOfShifts
     for i = 1 : length(sequence)
         Transmit.Delays(1+shift:length(delays.gap)+shift) = delays.gap; 
         switch sequence{i}
@@ -118,7 +120,7 @@ Transmit.Delays = zeros(1, Transducer.NumberOfElements);
 Transmit.Apodization = zeros(1, Transducer.NumberOfElements);
 
 % GUI parameters without gap
-for shift  = 0 : N_shifts
+for shift  = 0 : Acquisition.NumberOfShifts
     for i = 1 : length(sequence)
         Transmit.Delays(1+shift:length(delays.no_gap)+shift) = delays.no_gap; 
         switch sequence{i}
@@ -135,9 +137,14 @@ for shift  = 0 : N_shifts
 end
 
 %% put the MB in the center of domain
-point = [(BB.Xmax + BB.Xmin)/2;... 
-         (BB.Ymax + BB.Ymin)/2;...
-         (BB.Zmax + BB.Zmin)/2];  
+% point in the center
+% points = [(BB.Xmax + BB.Xmin)/2;... 
+%          (BB.Ymax + BB.Ymin)/2;...
+%          (BB.Zmax + BB.Zmin)/2];
+     
+points = [1e-3 2e-3 3e-3;... 
+         repmat((BB.Ymax + BB.Ymin)/2, 1, 3);...
+         repmat((BB.Zmax + BB.Zmin)/2, 1, 3)];
      
 file_path = '/Users/akuliesh1/MIS_opt_fullRT/MBframeRCA';
 mkdir(file_path);
@@ -145,8 +152,8 @@ mkdir(file_path);
 delete([file_path '/*'])
      
 frame = 1; 
-Frame.Points = point; 
-Frame.Diameter = 1.6e-6; % 1.6e-6 for 15 MHz
+Frame.Points = points; 
+Frame.Diameter = 1.5e-6 * ones(3, 1); % 1.5e-6 for 15.625 MHz
 file_num = num2str(frame/10000,  '%.4f');
 save([file_path '/Frame_', file_num(3:end), '.mat'], 'Frame');
 
