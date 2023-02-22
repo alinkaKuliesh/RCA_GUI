@@ -1,12 +1,6 @@
 clear all
 % load standard Microbbuble and Medium GUI parameters
-load('/Users/akuliesh1/RCA_GUI/GUI_output_parameters.mat', 'Microbubble', 'Medium')
-
-%%
-Medium.Inhomogeneity = 0;
-Medium.InhomogeneityCutoff = 2;
-Medium.SpeedOfSoundMinimum = Medium.SpeedOfSound*(1-Medium.Inhomogeneity*Medium.InhomogeneityCutoff);
-Medium.SpeedOfSoundMaximum = Medium.SpeedOfSound*(1+Medium.Inhomogeneity*Medium.InhomogeneityCutoff);
+load('/Users/alinakuliesh/GitHub/RCA_GUI/GUI_output_parameters.mat', 'Microbubble', 'Medium')
 
 %%
 Transmit.CenterFrequency = 15.625e6; % [Hz]
@@ -19,11 +13,16 @@ SimulationParameters.GridSize = Medium.SpeedOfSound / Transmit.CenterFrequency /
 
 %%
 Acquisition.NumberOfFrames = 1;
-Acquisition.PulsingScheme = 'x-AM'; % options: {'x-AM' 'x-Bmode'}
-Acquisition.NumberOfShifts = 4;
+Acquisition.PulsingScheme = 'x-Bmode'; % options: {'x-AM' 'x-Bmode'}
+Acquisition.NumberOfShifts = 10;
 
 %%
-sequence = {'left', 'right', 'both'};
+switch Acquisition.PulsingScheme 
+    case 'x-AM'
+        sequence = {'left', 'right', 'both'};
+    case 'x-Bmode'
+         sequence = {'both'};
+end
 
 %% currently only square arrays are supported
 Transducer.Type = 'RCA';
@@ -87,7 +86,7 @@ Geometry = compute_simulation_domain(...
     Geometry, Medium, Transducer, Transmit);
 
 %% Save the GUI parameters:
-file_path = '/Users/akuliesh1/MIS_opt_fullRT/GUI_output_parameters_RCA';
+file_path = '/Users/alinakuliesh/GitHub/MIS_opt_fullRT/GUI_output_parameters_RCA';
 mkdir(file_path);
 % empty the dir from prev runs
 delete([file_path '/*'])
@@ -142,38 +141,19 @@ end
 %          (BB.Ymax + BB.Ymin)/2;...
 %          (BB.Zmax + BB.Zmin)/2];
      
-points = [1e-3 2e-3 3e-3;... 
-         repmat((BB.Ymax + BB.Ymin)/2, 1, 3);...
-         repmat((BB.Zmax + BB.Zmin)/2, 1, 3)];
+points = [1e-3 2e-3 3e-3 4e-3;... 
+         repmat((BB.Ymax + BB.Ymin)/2, 1, 4);...
+         repmat((BB.Zmax + BB.Zmin)/2, 1, 4)];
      
-file_path = '/Users/akuliesh1/MIS_opt_fullRT/MBframeRCA';
+file_path = '/Users/alinakuliesh/GitHub/MIS_opt_fullRT/MBframeRCA';
 mkdir(file_path);
 % empty the dir from prev runs
 delete([file_path '/*'])
      
 frame = 1; 
 Frame.Points = points; 
-Frame.Diameter = 1.5e-6 * ones(3, 1); % 1.5e-6 for 15.625 MHz
+Frame.Diameter = 1.5e-6 * ones(4, 1); % 1.5e-6 for 15.625 MHz
 file_num = num2str(frame/10000,  '%.4f');
 save([file_path '/Frame_', file_num(3:end), '.mat'], 'Frame');
-
-%%
-% beam_width = 8; % 2 x 400um/100um = 8 elements
-% BB_full = BB;
-% BB_full.Ymax = (Transducer.NumberOfElements + beam_width) * Transducer.Pitch; % [m]
-% 
-% point = [(BB_full.Xmax + BB_full.Xmin)/2;... 
-%          (BB_full.Ymax + BB_full.Ymin)/2;...
-%          (BB_full.Zmax + BB_full.Zmin)/2];  
-%      
-% file_path = '/Users/akuliesh1/MIS_opt_fullRT/MBframeRCA';
-% mkdir(file_path);
-%      
-% for frame = 1 : beam_width
-%     Frame.Points = point - [0; Transducer.Pitch * (frame-1); 0]; 
-%     Frame.Diameter = 1.8e-6;
-%     file_num = num2str(frame/1000,  '%.3f');
-%     save([file_path '/Frame_', file_num(3:end), '.mat'], 'Frame');
-% end
 
 
