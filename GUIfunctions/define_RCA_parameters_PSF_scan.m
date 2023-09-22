@@ -14,7 +14,7 @@ SimulationParameters.GridSize = Medium.SpeedOfSound / Transmit.CenterFrequency /
 
 %%
 Acquisition.NumberOfFrames = 1;
-Acquisition.PulsingScheme = 'x-Bmode'; % options: {'x-AM' 'x-Bmode'}
+Acquisition.PulsingScheme = 'x-AM'; % options: {'x-AM' 'x-Bmode'}
 Acquisition.NumberOfShifts = 10; % we will shift/move the elements in one direction in the domain to simulate the probe without simulating all elements
 
 %%
