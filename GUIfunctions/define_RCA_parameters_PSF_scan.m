@@ -47,7 +47,7 @@ Transmit.SamplingRate = 250e6; % [Hz]
 signal = toneBurst(Transmit.SamplingRate, Transmit.CenterFrequency, ...
     Transmit.NumberOfCycles, 'Envelope', Transmit.Envelope);
 Transmit.PressureSignal = Transmit.AcousticPressure * signal / max(signal);
-Transmit.Angle = 21; % [deg]
+Transmit.Angle = 7; % [deg]
 Transmit.LateralFocus = Inf;
 
 %%
@@ -87,7 +87,7 @@ Geometry = compute_simulation_domain( ...
     Geometry, Medium, Transducer, Transmit);
 
 %% Save the GUI parameters:
-Path_To_Save = [PathTo_Github, filesep, '/MIS_opt_fullRT/GUI_output_parameters_RCA'];
+Path_To_Save = [Path_To_Github, filesep, '/MIS_opt_fullRT/GUI_output_parameters_RCA'];
 mkdir(Path_To_Save);
 % empty the dir from prev runs
 delete([Path_To_Save '/*'])
@@ -114,7 +114,7 @@ for shift = 0:Acquisition.NumberOfShifts
                 Transmit.Apodization(1 + shift:length(window.gap.both) + shift) = window.gap.both;
         end
 
-        save([file_path '/GUI_output_parameters_RCA_' sequence{i} '_gap_' num2str(shift) '.mat'], ...
+        save([Path_To_Save '/GUI_output_parameters_RCA_' sequence{i} '_gap_' num2str(shift) '.mat'], ...
         'Transmit');
     end
 
@@ -139,7 +139,7 @@ for shift = 0:Acquisition.NumberOfShifts
                 Transmit.Apodization(1 + shift:length(window.no_gap.both) + shift) = window.no_gap.both;
         end
 
-        save([file_path '/GUI_output_parameters_RCA_' sequence{i} '_no_gap_' num2str(shift) '.mat'], ...
+        save([Path_To_Save '/GUI_output_parameters_RCA_' sequence{i} '_no_gap_' num2str(shift) '.mat'], ...
         'Transmit');
     end
 
@@ -155,7 +155,7 @@ points = [1e-3 2e-3 3e-3 4e-3; ...
               repmat((BB.Ymax + BB.Ymin) / 2, 1, 4); ...
               repmat((BB.Zmax + BB.Zmin) / 2, 1, 4)];
 
-Path_To_Save_MB = [Path_To_Save, filesp, '/MBframeRCA'];
+Path_To_Save_MB = [Path_To_Save, filesep, '/MBframeRCA'];
 mkdir(Path_To_Save_MB);
 % empty the dir from prev runs
 delete([Path_To_Save_MB '/*'])
