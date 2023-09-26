@@ -69,6 +69,7 @@ window.gap.right = [zeros(1, length(window_half) + 1) window_half];
 %%
 Geometry.startDepth = 0; % [m]
 Geometry.endDepth = Transducer.NumberOfActiveElements * Transducer.Pitch / 2 * cotd(Transmit.Angle); % [m]
+Geometry.endDepth = Transducer.NumberOfActiveElements * Transducer.Pitch / 2 * cotd(21); % [m]
 BB.Xmax = Geometry.endDepth; % [m]
 BB.Xmin = Geometry.startDepth; % [m]
 BB.Ymax = Transducer.NumberOfElements * Transducer.Pitch; % [m]
