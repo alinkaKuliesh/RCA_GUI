@@ -101,69 +101,78 @@ points = [1e-3 2e-3 3e-3 4e-3; ...
               repmat((BB.Ymax + BB.Ymin) / 2, 1, 4); ...
               repmat((BB.Zmax + BB.Zmin) / 2, 1, 4)];
 
-mkdir([Paths.Path_To_Github_Host, filesep, Paths.Path_To_Save_MB]);
-% empty the dir from prev runs
-% delete([Path_To_Save_MB '/*'])
+for i_points = 1:size(points, 2)
 
-frame = 1;
-Frame.Points = points;
-Frame.Diameter = 1.5e-6 * ones(4, 1); % 1.5e-6 for 15.625 MHz
-file_num = num2str(frame / 10000, '%.4f');
-save([Paths.Path_To_Github_Host, filesep, Paths.Path_To_Save_MB, filesep, '_Frame_', file_num(3:end), '.mat'], 'Frame');
-%% Save the GUI parameters:
-mkdir([Paths.Path_To_Github_Host, filesep, Paths.Path_To_Save_Params]);
-% empty the dir from prev runs
-% delete([Paths.Path_To_Save_Params '/*'])
+    %% Modify paths accordingly
+    Paths.Path_To_Save_Params_Loop = [Paths.Path_To_Save_Params, filesep, 'Bubble_', num2str(i_points)];
+    Paths.Path_To_Save_MB = [Paths.Path_To_Save_Params_Loop, filesep, 'MBframeRCA']; % This is the name of the folder where the microbubble positions are stored
+    Paths.Path_To_Save_Results = [Paths.Path_To_Save_Results, filesep, 'Bubble_', num2str(i_points)]
 
-save([Paths.Path_To_Github_Host, filesep, Paths.Path_To_Save_Params '/GUI_output_parameters_RCA.mat'], ...
-    'Microbubble', 'SimulationParameters', 'Geometry', 'Transducer', ...
-    'Acquisition', 'Medium', 'Transmit');
+    mkdir([Paths.Path_To_Github_Host, filesep, Paths.Path_To_Save_MB]);
+    % empty the dir from prev runs
+    % delete([Path_To_Save_MB '/*'])
 
-Transmit.Delays = zeros(1, Transducer.NumberOfElements);
-Transmit.Apodization = zeros(1, Transducer.NumberOfElements);
+    frame = 1;
+    Frame.Points = points;
+    Frame.Diameter = 1.5e-6 * ones(4, 1); % 1.5e-6 for 15.625 MHz
+    file_num = num2str(frame / 10000, '%.4f');
+    save([Paths.Path_To_Github_Host, filesep, Paths.Path_To_Save_MB, filesep, 'Bubble_', num2str(i_points), '_Frame_', file_num(3:end), '.mat'], 'Frame');
+    %% Save the GUI parameters:
+    mkdir([Paths.Path_To_Github_Host, filesep, Paths.Path_To_Save_Params_Loop]);
+    % empty the dir from prev runs
+    % delete([Paths.Path_To_Save_Params '/*'])
 
-% GUI parameters with gap
-for shift = 0:Acquisition.NumberOfShifts
+    save([Paths.Path_To_Github_Host, filesep, Paths.Path_To_Save_Params_Loop '/GUI_output_parameters_RCA.mat'], ...
+        'Microbubble', 'SimulationParameters', 'Geometry', 'Transducer', ...
+        'Acquisition', 'Medium', 'Transmit');
 
-    for i = 1:length(sequence)
-        Transmit.Delays(1 + shift:length(delays.gap) + shift) = delays.gap;
+    Transmit.Delays = zeros(1, Transducer.NumberOfElements);
+    Transmit.Apodization = zeros(1, Transducer.NumberOfElements);
 
-        switch sequence{i}
-            case 'left'
-                Transmit.Apodization(1 + shift:length(window.gap.left) + shift) = window.gap.left;
-            case 'right'
-                Transmit.Apodization(1 + shift:length(window.gap.right) + shift) = window.gap.right;
-            case 'both'
-                Transmit.Apodization(1 + shift:length(window.gap.both) + shift) = window.gap.both;
+    % GUI parameters with gap
+    for shift = 0:Acquisition.NumberOfShifts
+
+        for i = 1:length(sequence)
+            Transmit.Delays(1 + shift:length(delays.gap) + shift) = delays.gap;
+
+            switch sequence{i}
+                case 'left'
+                    Transmit.Apodization(1 + shift:length(window.gap.left) + shift) = window.gap.left;
+                case 'right'
+                    Transmit.Apodization(1 + shift:length(window.gap.right) + shift) = window.gap.right;
+                case 'both'
+                    Transmit.Apodization(1 + shift:length(window.gap.both) + shift) = window.gap.both;
+            end
+
+            save([Paths.Path_To_Github_Host, filesep, Paths.Path_To_Save_Params_Loop '/Transmit_sequence_' sequence{i} '_gap_' num2str(shift) '.mat'], ...
+            'Transmit');
         end
 
-        save([Paths.Path_To_Github_Host, filesep, Paths.Path_To_Save_Params '/Transmit_sequence_' sequence{i} '_gap_' num2str(shift) '.mat'], ...
-        'Transmit');
     end
 
-end
+    %%
+    Transmit.Delays = zeros(1, Transducer.NumberOfElements);
+    Transmit.Apodization = zeros(1, Transducer.NumberOfElements);
 
-%%
-Transmit.Delays = zeros(1, Transducer.NumberOfElements);
-Transmit.Apodization = zeros(1, Transducer.NumberOfElements);
+    % GUI parameters without gap
+    for shift = 0:Acquisition.NumberOfShifts
 
-% GUI parameters without gap
-for shift = 0:Acquisition.NumberOfShifts
+        for i = 1:length(sequence)
+            Transmit.Delays(1 + shift:length(delays.no_gap) + shift) = delays.no_gap;
 
-    for i = 1:length(sequence)
-        Transmit.Delays(1 + shift:length(delays.no_gap) + shift) = delays.no_gap;
+            switch sequence{i}
+                case 'left'
+                    Transmit.Apodization(1 + shift:length(window.no_gap.left) + shift) = window.no_gap.left;
+                case 'right'
+                    Transmit.Apodization(1 + shift:length(window.no_gap.right) + shift) = window.no_gap.right;
+                case 'both'
+                    Transmit.Apodization(1 + shift:length(window.no_gap.both) + shift) = window.no_gap.both;
+            end
 
-        switch sequence{i}
-            case 'left'
-                Transmit.Apodization(1 + shift:length(window.no_gap.left) + shift) = window.no_gap.left;
-            case 'right'
-                Transmit.Apodization(1 + shift:length(window.no_gap.right) + shift) = window.no_gap.right;
-            case 'both'
-                Transmit.Apodization(1 + shift:length(window.no_gap.both) + shift) = window.no_gap.both;
+            save([Paths.Path_To_Github_Host, filesep, Paths.Path_To_Save_Params_Loop '/Transmit_sequence_' sequence{i} '_no_gap_' num2str(shift) '.mat'], ...
+            'Transmit');
         end
 
-        save([Paths.Path_To_Github_Host, filesep, Paths.Path_To_Save_Params '/Transmit_sequence_' sequence{i} '_no_gap_' num2str(shift) '.mat'], ...
-        'Transmit');
     end
 
 end
