@@ -117,7 +117,7 @@ mkdir([Paths.Path_To_Github_Host, filesep, Paths.Path_To_Save_Params]);
 
 save([Paths.Path_To_Github_Host, filesep, Paths.Path_To_Save_Params '/GUI_output_parameters_RCA.mat'], ...
     'Microbubble', 'SimulationParameters', 'Geometry', 'Transducer', ...
-    'Acquisition', 'Medium', 'Transmit');
+    'Acquisition', 'Medium', 'Transmit', 'Paths');
 
 Transmit.Delays = zeros(1, Transducer.NumberOfElements);
 Transmit.Apodization = zeros(1, Transducer.NumberOfElements);

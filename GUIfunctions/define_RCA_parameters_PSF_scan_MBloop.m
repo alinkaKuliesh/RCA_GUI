@@ -1,14 +1,16 @@
 clear all
 
 %% Define paths
-Paths.Path_To_Github_Host = 'C:\Users\bheiles\Documents\Github\'; % Path to the github repos on the host computer (your own)
-Paths.Path_To_Github_Remote = './'; % Path to the github repos on the remote server
-Paths.Path_To_Save_Params = ['/MIS_opt_fullRT/DATA/PSF_1MB/Simulation_Parameters']; % This is the name of the folder where the parameters of this simulation will be saved
+Paths.Path_To_Github_Host = 'C:\Users\bheiles\Documents\Github'; % Path to the github repos on the host computer (your own)
+Paths.Path_To_Github_Remote = '/home/x3008359/MIS_opt_fullRT'; % Path to the github repos on the remote server
+Paths.Path_To_Simulator = 'MIS_opt_fullRT'; % path to the simulator.
+Paths.Path_To_GUI = 'RCA_GUI'; % path to the GUI
+Paths.Path_To_Save_Params = ['DATA/PSF_1MB/Simulation_Parameters']; % This is the name of the folder where the parameters of this simulation will be saved
 Paths.Path_To_Save_MB = [Paths.Path_To_Save_Params, filesep, 'MBframeRCA']; % This is the name of the folder where the microbubble positions are stored
 Paths.Path_To_Save_Results = ['DATA/PSF_1MB/Simulation_Results']; % this is the name of the folder where the simmulation results will be saved on the remote comptuer
 
 %% load standard Microbbuble and Medium GUI parameters
-load([Paths.Path_To_Github_Host, filesep, '/RCA_GUI/Standard_MBs_Medium.mat'], 'Microbubble', 'Medium')
+load([Paths.Path_To_Github_Host, filesep, Paths.Path_To_GUI, filesep, 'Standard_MBs_Medium.mat'], 'Microbubble', 'Medium')
 
 %% Load and add kWave paths
 addpath(genpath([Paths.Path_To_Github_Host, 'kWave\k-Wave\']));
@@ -108,7 +110,7 @@ for i_points = 1:size(points, 2)
     Paths.Path_To_Save_MB = [Paths.Path_To_Save_Params_Loop, filesep, 'MBframeRCA']; % This is the name of the folder where the microbubble positions are stored
     Paths.Path_To_Save_Results = [Paths.Path_To_Save_Results, filesep, 'Bubble_', num2str(i_points)]
 
-    mkdir([Paths.Path_To_Github_Host, filesep, Paths.Path_To_Save_MB]);
+    mkdir([Paths.Path_To_Github_Host, filesep, Paths.Path_To_Simulator, filesep, Paths.Path_To_Save_MB]);
     % empty the dir from prev runs
     % delete([Path_To_Save_MB '/*'])
 
@@ -116,15 +118,15 @@ for i_points = 1:size(points, 2)
     Frame.Points = points;
     Frame.Diameter = 1.5e-6 * ones(4, 1); % 1.5e-6 for 15.625 MHz
     file_num = num2str(frame / 10000, '%.4f');
-    save([Paths.Path_To_Github_Host, filesep, Paths.Path_To_Save_MB, filesep, 'Bubble_', num2str(i_points), '_Frame_', file_num(3:end), '.mat'], 'Frame');
+    save([Paths.Path_To_Github_Host, filesep, Paths.Path_To_Simulator, filesep, Paths.Path_To_Save_MB, filesep, 'Frame_', file_num(3:end), '.mat'], 'Frame');
     %% Save the GUI parameters:
     mkdir([Paths.Path_To_Github_Host, filesep, Paths.Path_To_Save_Params_Loop]);
     % empty the dir from prev runs
     % delete([Paths.Path_To_Save_Params '/*'])
 
-    save([Paths.Path_To_Github_Host, filesep, Paths.Path_To_Save_Params_Loop '/GUI_output_parameters_RCA.mat'], ...
+    save([Paths.Path_To_Github_Host, filesep, Paths.Path_To_Simulator, filesep, Paths.Path_To_Save_Params_Loop '/GUI_output_parameters_RCA.mat'], ...
         'Microbubble', 'SimulationParameters', 'Geometry', 'Transducer', ...
-        'Acquisition', 'Medium', 'Transmit');
+        'Acquisition', 'Medium', 'Transmit', 'Paths');
 
     Transmit.Delays = zeros(1, Transducer.NumberOfElements);
     Transmit.Apodization = zeros(1, Transducer.NumberOfElements);
@@ -144,7 +146,7 @@ for i_points = 1:size(points, 2)
                     Transmit.Apodization(1 + shift:length(window.gap.both) + shift) = window.gap.both;
             end
 
-            save([Paths.Path_To_Github_Host, filesep, Paths.Path_To_Save_Params_Loop '/Transmit_sequence_' sequence{i} '_gap_' num2str(shift) '.mat'], ...
+            save([Paths.Path_To_Github_Host, filesep, Paths.Path_To_Simulator, filesep, Paths.Path_To_Save_Params_Loop '/Transmit_sequence_' sequence{i} '_gap_' num2str(shift) '.mat'], ...
             'Transmit');
         end
 
@@ -169,7 +171,7 @@ for i_points = 1:size(points, 2)
                     Transmit.Apodization(1 + shift:length(window.no_gap.both) + shift) = window.no_gap.both;
             end
 
-            save([Paths.Path_To_Github_Host, filesep, Paths.Path_To_Save_Params_Loop '/Transmit_sequence_' sequence{i} '_no_gap_' num2str(shift) '.mat'], ...
+            save([Paths.Path_To_Github_Host, filesep, Paths.Path_To_Simulator, filesep, Paths.Path_To_Save_Params_Loop '/Transmit_sequence_' sequence{i} '_no_gap_' num2str(shift) '.mat'], ...
             'Transmit');
         end
 
