@@ -5,9 +5,9 @@ Paths.Path_To_Github_Host = 'C:\Users\bheiles\Documents\Github'; % Path to the g
 Paths.Path_To_Github_Remote = '/home/x3008359/MIS_opt_fullRT'; % Path to the github repos on the remote server
 Paths.Path_To_Simulator = 'MIS_opt_fullRT'; % path to the simulator.
 Paths.Path_To_GUI = 'RCA_GUI'; % path to the GUI
-Paths.Path_To_Save_Params = ['DATA/PSF_1MB/Simulation_Parameters']; % This is the name of the folder where the parameters of this simulation will be saved
+Paths.Path_To_Save_Params = ['DATA/Separation_critera/Simulation_Parameters']; % This is the name of the folder where the parameters of this simulation will be saved
 Paths.Path_To_Save_MB = [Paths.Path_To_Save_Params, '/', 'MBframeRCA']; % This is the name of the folder where the microbubble positions are stored
-Paths.Path_To_Save_Results = ['DATA/PSF_1MB/Simulation_Results']; % this is the name of the folder where the simmulation results will be saved on the remote comptuer
+Paths.Path_To_Save_Results = ['DATA/Separation_critera/Simulation_Results']; % this is the name of the folder where the simmulation results will be saved on the remote comptuer
 
 %% load standard Microbbuble and Medium GUI parameters
 load([Paths.Path_To_Github_Host, '/', Paths.Path_To_GUI, '/', 'Standard_MBs_Medium.mat'], 'Microbubble', 'Medium')
@@ -99,23 +99,28 @@ Geometry.BoundingBox.Diagonal = [BB.Xmax - BB.Xmin; ...
 Geometry = compute_simulation_domain( ...
     Geometry, Medium, Transducer, Transmit);
 %% Create a loop to generate MBS
-points = [1e-3 2e-3 3e-3 4e-3; ...
-              repmat((BB.Ymax + BB.Ymin) / 2, 1, 4); ...
-              repmat((BB.Zmax + BB.Zmin) / 2, 1, 4)];
+% points = [1e-3 2e-3 3e-3 4e-3; ...
+%               repmat((BB.Ymax + BB.Ymin) / 2, 1, 4); ...
+%               repmat((BB.Zmax + BB.Zmin) / 2, 1, 4)];
+points = [3e-3; ...
+              repmat((BB.Ymax + BB.Ymin) / 2, 1, 1); ...
+              repmat((BB.Zmax + BB.Zmin) / 2, 1, 1)];
+sep_criteria = 1 ./ [1:10] .* Medium.SpeedOfSound / Transmit.CenterFrequency;
 
-for i_points = 1:size(points, 2)
+for i_points = 1:size(sep_criteria, 2)
 
     %% Modify paths accordingly
-    Paths.Path_To_Save_Params_Loop = [Paths.Path_To_Save_Params, '/', 'Bubble_', num2str(i_points)];
+    Paths.Path_To_Save_Params_Loop = [Paths.Path_To_Save_Params, '/', 'lambda_over_', num2str(1 ./ (sep_criteria(i_points) ./ Medium.SpeedOfSound * Transmit.CenterFrequency))];
     Paths.Path_To_Save_MB = [Paths.Path_To_Save_Params_Loop, '/', 'MBframeRCA']; % This is the name of the folder where the microbubble positions are stored
-    Paths.Path_To_Save_Results_Bub = [Paths.Path_To_Save_Results, '/', 'Bubble_', num2str(i_points)]
+    Paths.Path_To_Save_Results_Bub = [Paths.Path_To_Save_Results, '/', 'lambda_over_', num2str(1 ./ (sep_criteria(i_points) ./ Medium.SpeedOfSound * Transmit.CenterFrequency))]
 
     mkdir([Paths.Path_To_Github_Host, '/', Paths.Path_To_Simulator, '/', Paths.Path_To_Save_MB]);
     % empty the dir from prev runs
     % delete([Path_To_Save_MB '/*'])
 
     frame = 1;
-    Frame.Points = points(:, i_points);
+    Frame.Points = [points(:, 1) points(:, 1)];
+    Frame.Points(2, 2) = Frame.Points(2, 2) + sep_criteria(i_points); % increment position in Y of sep_criteria
     Frame.Diameter = 1.5e-6; % 1.5e-6 for 15.625 MHz
     file_num = num2str(frame / 10000, '%.4f');
     save([Paths.Path_To_Github_Host, '/', Paths.Path_To_Simulator, '/', Paths.Path_To_Save_MB, '/', 'Frame_', file_num(3:end), '.mat'], 'Frame');
